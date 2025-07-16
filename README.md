@@ -96,5 +96,5 @@ To use your own extension icon:
 
 ## License
 
-MIT © [Your Name or Organization]  
+MIT © SidinGit  
 Feel free to fork, modify, and redistribute!
