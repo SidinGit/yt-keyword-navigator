@@ -1,69 +1,100 @@
-# React + TypeScript + Vite
+# YouTube Keyword Jump
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A Chrome extension that lets you search for any spoken keyword in a YouTube video and jump instantly to exactly where that word is spoken.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Features
 
-## Expanding the ESLint configuration
+- **Automatic transcript interception**  
+  Wraps YouTube’s own `/api/timedtext` calls (both JSON3 and XML) in the page context and parses out every caption segment (`{ start: number, text: string }`).
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Instant keyword search UI**  
+  Popup UI built with React + TypeScript. Type a word, press **Enter** or click **Go**, and see every matching timestamp + snippet.
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- **One-click seeking**  
+  Click any result to have the video’s playback jump straight to that timestamp.
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Getting Started
+
+### Prerequisites
+
+- Node.js (v14+)
+- npm (v6+)
+- Chrome browser (any recent version)
+
+### 1. Clone the repo
+
+```bash
+git clone https://github.com/your-username/yt-keyword-jump.git
+cd yt-keyword-jump
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 2. Install dependencies
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
+
+### 3. Build the extension
+
+This will compile the TypeScript, bundle your React popup, copy static assets, and output everything into the `dist/` folder:
+
+```bash
+npm run build
+```
+
+### 4. Load into Chrome
+
+1. Open `chrome://extensions` in Chrome.  
+2. Enable **Developer mode** (toggle in the top right).  
+3. Click **Load unpacked** and select the `dist/` directory.  
+4. You should now see **YouTube Keyword Jump** in your extensions list.
+
+---
+
+## Usage
+
+1. Navigate to any YouTube video that has captions (automatic or uploaded).  
+2. Click the **YouTube Keyword Jump** icon in the toolbar.  
+3. In the popup:
+   - Type the word you want to find.
+   - Press **Enter** or click **Go**.
+4. Browse the list of matching timestamps and snippets.  
+5. Click any result to jump the video directly to that moment (and the popup will close automatically).
+
+---
+
+## Development Mode
+
+If you’d like live-reload during development:
+
+1. Run the Vite dev server:
+
+   ```bash
+   npm run dev
+   ```
+
+2. In `chrome://extensions` load the **unpacked** `dist/` folder as above.  
+3. Vite will rebuild on file changes—just **Reload** the extension in Chrome to pick up your latest code.
+
+*(Note: full HMR in Chrome popups requires additional plugin setup; for quick iteration, a manual reload is simplest.)*
+
+---
+
+## Customizing the Icon
+
+To use your own extension icon:
+
+1. Place your `16×16`, `48×48`, and `128×128` PNG/SVG files in `public/icons/`.  
+2. Update `public/manifest.json` under the `"icons"` and `"action.default_icon"` keys to point to your new files.  
+3. Rebuild (`npm run build`) and Reload the extension.
+
+---
+
+## License
+
+MIT © [Your Name or Organization]  
+Feel free to fork, modify, and redistribute!
