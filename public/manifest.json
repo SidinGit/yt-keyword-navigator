@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "YouTube Keyword Jump",
+  "description": "Search a spoken keyword in a YouTube video’s captions and jump straight to that timestamp.",
+  "version": "0.1",
+  "icons": {
+    "16": "vite.svg",
+    "48": "vite.svg",
+    "128": "vite.svg"
+  },
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://www.youtube.com/*",
+    "https://video.google.com/*"
+  ],
+  "action": {
+    "default_popup": "index.html",
+    "default_icon": {
+      "16": "vite.svg",
+      "48": "vite.svg",
+      "128": "vite.svg"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/watch*"],
+       "js": ["content.js"],
+       "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+    "resources": ["content/inject.js"],
+    "matches": ["https://www.youtube.com/*"]
+  }
+  ]
+}
