@@ -28,7 +28,7 @@ A Chrome extension that lets you search for any spoken keyword in a YouTube vide
 ### 1. Clone the repo
 
 ```bash
-git clone [https://github.com/your-username/yt-keyword-jump.git](https://github.com/SidinGit/yt-keyword-navigator.git)
+git clone https://github.com/SidinGit/yt-keyword-navigator.git
 cd yt-keyword-jump
 ```
 
