@@ -3,85 +3,111 @@ import type { Segment } from '../types/transcript';
 
 let transcript: Segment[] = [];
 
-/** 1) Inject the external fetch-interceptor into the page context */
-(() => {
+/** 1) Inject the interceptor as early as possible */
+;(function injectInterceptor() {
   const s = document.createElement('script');
   s.src = chrome.runtime.getURL('content/inject.js');
-  s.onload = () => {
-    console.log('🦆 fetch-interceptor injected');
-    s.remove();
-  };
+  s.onload = () => s.remove();
   (document.head || document.documentElement).appendChild(s);
 })();
 
-/** 2) Listen for the real timedtext network response dispatched from the page */
-window.addEventListener('YT_TIMEDTEXT', (ev: Event) => {
-  const { url, body } = (ev as CustomEvent<{url: string; body: string}>).detail;
+/** Utility: find the CC toggle button */
+function getCCButton(): HTMLButtonElement | null {
+  return document.querySelector<HTMLButtonElement>('.ytp-subtitles-button');
+}
+
+/** Utility: set captions on or off */
+function setCaptions(on: boolean) {
+  const btn = getCCButton();
+  if (!btn) return;
+  const pressed = btn.getAttribute('aria-pressed') === 'true';
+  if (pressed !== on) {
+    btn.click();
+    console.log(`🦆 Captions turned ${on ? 'ON' : 'OFF'}`);
+  }
+}
+
+/** Utility: toggle off→on */
+function retryCaptionsToggle() {
+  setCaptions(false);
+  setTimeout(() => setCaptions(true), 500);
+  console.log('🦆 Retrying captions toggle (off→on)');
+}
+
+/** 2) When the video loads metadata, ensure CC is on */
+;(function ensureCCOnLoad() {
+  const poll = setInterval(() => {
+    const video = document.querySelector<HTMLVideoElement>('video');
+    if (video) {
+      clearInterval(poll);
+      video.addEventListener('loadedmetadata', () => {
+        setCaptions(true);
+      }, { once: true });
+    }
+  }, 500);
+})();
+
+/** 3) Listen for the intercepted timedtext calls */
+window.addEventListener('YT_TIMEDTEXT', (ev: any) => {
+  const { url, body } = ev.detail as { url: string; body: string };
   console.log('🦆 Intercepted timedtext call:', url);
 
-  // Try JSON3 first
+  let segments: Segment[] = [];
+
+  // Try JSON3
   if (body.trim().startsWith('{')) {
     try {
-      const data = JSON.parse(body) as { events?: { tStartMs?: number; segs?: { utf8: string }[] }[] };
-      const events = Array.isArray(data.events) ? data.events : [];
-      transcript = events.map(e => ({
+      const data = JSON.parse(body) as { events?: any[] };
+      const evts = Array.isArray(data.events) ? data.events : [];
+      segments = evts.map(e => ({
         start: (e.tStartMs ?? 0) / 1000,
-        text:  (e.segs ?? []).map(s => s.utf8).join('').trim()
+        text:  (e.segs ?? []).map((s: any) => s.utf8).join('').trim()
       }));
-      console.log(`🦆 Transcript (JSON3) loaded: ${transcript.length} segments`);
-      return;
-    } catch (parseErr) {
-      console.error('❌ Failed to parse intercepted JSON3:', parseErr);
-      // fallback to XML below
+    } catch (err) {
+      console.error('❌ JSON3 parse failed:', err);
     }
   }
 
-  // Fallback: XML parse
-  transcript = parseXmlCaptions(body);
-  console.log(`🦆 Transcript (XML) loaded: ${transcript.length} segments`);
+  // XML fallback
+  if (segments.length === 0) {
+    segments = Array.from(
+      new DOMParser()
+        .parseFromString(body, 'text/xml')
+        .querySelectorAll('text')
+    ).map(node => ({
+      start: parseFloat(node.getAttribute('start') || '0'),
+      text:  node.textContent?.replace(/\s+/g, ' ').trim() || ''
+    }));
+  }
+
+  // If still zero, retry the toggle cycle
+  if (segments.length === 0) {
+    retryCaptionsToggle();
+    return;
+  }
+
+  // Got real transcript: ensure captions on and store
+  setCaptions(true);
+  transcript = segments;
+  console.log(`🦆 Transcript loaded: ${transcript.length} segments`);
 });
 
-/** Helper: parse XML timed-text into Segment[] */
-function parseXmlCaptions(xmlText: string): Segment[] {
-  const xml = new DOMParser().parseFromString(xmlText, 'text/xml');
-  return Array.from(xml.querySelectorAll('text')).map(node => ({
-    start: parseFloat(node.getAttribute('start') ?? '0'),
-    text:  node.textContent?.replace(/\s+/g, ' ').trim() ?? ''
-  }));
-}
-
-/** 3) Respond to messages from the popup */
+/** 4) Respond to popup messages */
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.action === 'getTranscript') {
     sendResponse({ transcript });
+    return;
   }
-  else if (msg.action === 'seek' && typeof msg.time === 'number') {
-    const time = msg.time;
-
-    // 1) HTMLVideoElement
-    const video = document.querySelector('video');
+  if (msg.action === 'seek' && typeof msg.time === 'number') {
+    const t = msg.time;
+    const video = document.querySelector<HTMLVideoElement>('video');
     if (video) {
-      console.log('🦆 Seeking video.currentTime =', time);
-      video.currentTime = time;
+      video.currentTime = t;
       return;
     }
-
-    // 2) YouTube IFrame API player
-    const ytPlayer = (window as any).YT?.get('movie_player');
-    if (ytPlayer?.seekTo) {
-      console.log('🦆 Seeking via YT Player API to', time);
-      ytPlayer.seekTo(time, true);
-      return;
+    const yt = (window as any).YT?.get('movie_player');
+    if (yt?.seekTo) {
+      yt.seekTo(t, true);
     }
-
-    // 3) Fallback: any element with seekTo
-    const el = document.getElementById('movie_player') as any;
-    if (el?.seekTo) {
-      console.log('🦆 Seeking via container.seekTo to', time);
-      el.seekTo(time, true);
-      return;
-    }
-
-    console.warn('⚠️ Could not find a way to seek!');
   }
 });

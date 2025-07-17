@@ -1,49 +1,69 @@
-import React, { useState } from 'react';
-import type { Segment } from '../types/transcript';
+import React from 'react'
+import type { Segment } from '../types/transcript'
 
 interface Props {
-  onResults: (hits: Segment[]) => void;
-  onLoading?: (isLoading: boolean) => void;
-  onError?:   (message: string | null) => void;
+  keyword:   string
+  setKeyword: (kw: string) => void
+  onResults: (hits: Segment[]) => void
+  onLoading?: (isLoading: boolean) => void
+  onError?:   (err: string | null) => void
 }
 
-export default function SearchBar({ onResults, onLoading, onError }: Props) {
-  const [kw, setKw] = useState('');
+export default function SearchBar({
+  keyword,
+  setKeyword,
+  onResults,
+  onLoading,
+  onError
+}: Props) {
+  // escape regex chars
+  const escapeRegex = (s: string) =>
+    s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
   const doSearch = async () => {
-    onLoading?.(true);
-    onError?.(null);
+    const term = keyword.trim()
+    if (!term) {
+      onResults([])
+      return
+    }
+
+    onLoading?.(true)
+    onError?.(null)
 
     try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      const { transcript } = await chrome.tabs.sendMessage(tab.id!, { action: 'getTranscript' });
-      const hits: Segment[] = (transcript as Segment[]).filter(s =>
-        s.text.toLowerCase().includes(kw.trim().toLowerCase())
-      );
-      onResults(hits);
-    } catch (e: any) {
-      onError?.(e.message || 'Search failed');
-    } finally {
-      onLoading?.(false);
-    }
-  };
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+      const { transcript } = await chrome.tabs.sendMessage(tab.id!, { action: 'getTranscript' })
 
-  // handle both click *and* Enter
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    doSearch();
-  };
+      const pattern = new RegExp(`\\b${escapeRegex(term)}\\b`, 'i')
+      const hits: Segment[] = (transcript as Segment[]).filter(s =>
+        pattern.test(s.text)
+      )
+
+      onResults(hits)
+    } catch (e: any) {
+      onError?.(e.message || 'Search failed')
+    } finally {
+      onLoading?.(false)
+    }
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    doSearch()
+  }
 
   return (
     <form className="search-bar" onSubmit={handleSubmit}>
       <input
         type="text"
-        value={kw}
-        onChange={e => setKw(e.target.value)}
+        value={keyword}
+        onChange={e => setKeyword(e.target.value)}
         placeholder="Search keyword…"
         autoFocus
       />
-      <button type="submit">Go</button>
+      <button type="submit" disabled={!keyword.trim()}>
+        Go
+      </button>
     </form>
-  );
+  )
 }

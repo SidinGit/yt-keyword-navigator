@@ -1,74 +1,146 @@
-body {
-  margin: 0;
-  font-family: sans-serif;
-  width: 280px;
+/* src/popup/popup.css */
+
+/* 1) Color palette */
+:root {
+  --bg:         #181a1b;                 /* almost black */
+  --card-bg:    #242628;                 /* dark gray card */
+  --text:       #e0e0e0;                 /* light gray text */
+  --accent:     #2cfd92;                 /* neon green */
+  --hover-bg:   rgba(20, 255, 130, 0.1);   /* translucent green hover */
+}
+
+/* 2) Popup container */
+.popup {
+  width: 320px;
   padding: 12px;
+  background: var(--bg);
+  color: var(--text);
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
+  font-size: 14px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
 }
 
-h1 {
-  margin: 0 0 8px;
-  font-size: 1.125rem;
+/* 3) Header */
+.popup h1 {
+  margin: 0 0 12px;
+  font-size: 18px;
+  font-weight: 500;
+  text-align: center;
+  letter-spacing: 0.5px;
 }
 
+/* 4) Search bar */
 .search-bar {
   display: flex;
-  gap: 4px;
+  gap: 8px;
+  margin-bottom: 12px;
 }
-
 .search-bar input {
   flex: 1;
-  padding: 6px;
-  border: 1px solid #ccc;
-  border-radius: 4px 0 0 4px;
+  padding: 8px;
+  background: var(--card-bg);
+  border: 1px solid var(--bg);
+  border-radius: 4px;
+  color: var(--text);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
 }
-
+.search-bar input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+}
 .search-bar button {
-  padding: 6px 12px;
+  padding: 8px 14px;
+  background: var(--accent);
   border: none;
-  background: #101b89;
-  color: white;
-  border-radius: 0 4px 4px 0;
+  border-radius: 4px;
+  color: #181a1b;
+  font-weight: 600;
   cursor: pointer;
+  transition: filter 0.2s, box-shadow 0.2s;
+}
+.search-bar button:hover:not(:disabled) {
+  filter: brightness(1.1);
+  box-shadow: 0 0 6px var(--accent);
+}
+.search-bar button:disabled {
+  background: #444;
+  cursor: not-allowed;
+  filter: none;
+  box-shadow: none;
 }
 
-.search-bar button:hover {
-  background: #0d156f;
-}
-
-.no-matches {
-  margin-top: 8px;
-  color: #666;
-  font-size: 0.875rem;
-}
-
+/* 5) Results list & scrollbars */
 .results-list {
   list-style: none;
-  margin: 8px 0 0;
+  margin: 0;
   padding: 0;
-  max-height: 200px;
+  max-height: 300px;
   overflow-y: auto;
 }
+.results-list::-webkit-scrollbar {
+  width: 6px;
+}
+.results-list::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 3px;
+}
 
+/* 6) Individual result items */
 .result-item {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
-  padding: 6px;
-  border-bottom: 1px solid #eee;
+  align-items: center;
+  padding: 6px 8px;
+  margin: 4px 0;
+  background: var(--card-bg);
+  border-radius: 4px;
   cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
 }
-
 .result-item:hover {
-  background: #f5f5f5;
+  background: var(--hover-bg);
+  transform: translateX(2px);
+}
+.result-item:active {
+  transform: translateX(1px);
 }
 
-.time {
-  font-family: monospace;
-  font-size: 0.875rem;
-  color: #555;
+/* 7) Timestamp style */
+.result-item .time {
+  font-family:
+    "SFMono-Regular",
+    Consolas,
+    "Liberation Mono",
+    Menlo,
+    monospace;
+  margin-right: 8px;
+  color: var(--accent);
+  flex-shrink: 0;
+  font-size: 13px;
 }
 
-.snippet {
-  font-size: 0.875rem;
-  color: #333;
+/* 8) Snippet text */
+.result-item .snippet {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 13px;
+}
+
+/* 9) “No matches” state */
+.no-matches {
+  padding: 12px;
+  text-align: center;
+  color: #777;
+  font-style: italic;
 }
