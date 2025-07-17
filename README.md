@@ -28,7 +28,7 @@ A Chrome extension that lets you search for any spoken keyword in a YouTube vide
 ### 1. Clone the repo
 
 ```bash
-git clone https://github.com/your-username/yt-keyword-jump.git
+git clone https://github.com/SidinGit/yt-keyword-navigator.git
 cd yt-keyword-jump
 ```
 
@@ -57,7 +57,7 @@ npm run build
 
 ## Usage
 
-1. Navigate to any YouTube video that has captions (automatic or uploaded).  
+1. Navigate to any YouTube video and turn on the English captions (automatic or uploaded).  
 2. Click the **YouTube Keyword Jump** icon in the toolbar.  
 3. In the popup:
    - Type the word you want to find.
